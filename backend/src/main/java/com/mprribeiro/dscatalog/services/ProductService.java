@@ -10,45 +10,45 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.mprribeiro.dscatalog.dto.CategoryDTO;
-import com.mprribeiro.dscatalog.entities.Category;
-import com.mprribeiro.dscatalog.repositories.CategoryRepository;
+import com.mprribeiro.dscatalog.dto.ProductDTO;
+import com.mprribeiro.dscatalog.entities.Product;
+import com.mprribeiro.dscatalog.repositories.ProductRepository;
 import com.mprribeiro.dscatalog.services.exceptions.DatabaseException;
 import com.mprribeiro.dscatalog.services.exceptions.ResourceNotFoundException;
 
 @Service
-public class CategoryService {
+public class ProductService {
 
 	@Autowired
-	private CategoryRepository categoryRepository;
+	private ProductRepository productRepository;
 	
 	@Transactional(readOnly = true)
-	public Page<CategoryDTO> findAll(Pageable pageable) {
-		var categories = categoryRepository.findAll(pageable);
-		return categories.map(category -> new CategoryDTO(category));
+	public Page<ProductDTO> findAll(Pageable pageable) {
+		var products = productRepository.findAll(pageable);	
+		return products.map(product -> new ProductDTO(product));
 	}
 
 	@Transactional(readOnly = true)
-	public CategoryDTO findById(Long id) {
-		var category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entity not found for id " + id));
-		return new CategoryDTO(category);
+	public ProductDTO findById(Long id) {
+		var product = productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entity not found for id " + id));
+		return new ProductDTO(product, product.getCategories());
 	}
 
 	@Transactional
-	public CategoryDTO insert(CategoryDTO dto) {
-		var category = new Category();
-		category.setName(dto.getName());
-		category = categoryRepository.save(category);
-		return new CategoryDTO(category);
+	public ProductDTO insert(ProductDTO dto) {
+		var product = new Product();
+		product.setName(dto.getName());
+		product = productRepository.save(product);
+		return new ProductDTO(product);
 	}
 
 	@Transactional
-	public CategoryDTO update(Long id, CategoryDTO dto) {
+	public ProductDTO update(Long id, ProductDTO dto) {
 		try {
-			var category = categoryRepository.getById(id);
-			category.setName(dto.getName());
-			category = categoryRepository.save(category);
-			return new CategoryDTO(category);
+			var product = productRepository.getById(id);
+			product.setName(dto.getName());
+			product = productRepository.save(product);
+			return new ProductDTO(product);
 		} catch (EntityNotFoundException e) {
 			throw new ResourceNotFoundException("Entity not found for id " + id);
 		}
@@ -56,7 +56,7 @@ public class CategoryService {
 	
 	public void delete(Long id) {
 		try {
-			categoryRepository.deleteById(id);
+			productRepository.deleteById(id);
 		} catch (EmptyResultDataAccessException e) {
 			throw new ResourceNotFoundException("Entity not found for id " + id);
 		} catch (DataIntegrityViolationException e) {
