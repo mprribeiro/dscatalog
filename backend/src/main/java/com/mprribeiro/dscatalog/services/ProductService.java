@@ -10,8 +10,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mprribeiro.dscatalog.dto.CategoryDTO;
 import com.mprribeiro.dscatalog.dto.ProductDTO;
+import com.mprribeiro.dscatalog.entities.Category;
 import com.mprribeiro.dscatalog.entities.Product;
+import com.mprribeiro.dscatalog.repositories.CategoryRepository;
 import com.mprribeiro.dscatalog.repositories.ProductRepository;
 import com.mprribeiro.dscatalog.services.exceptions.DatabaseException;
 import com.mprribeiro.dscatalog.services.exceptions.ResourceNotFoundException;
@@ -21,6 +24,9 @@ public class ProductService {
 
 	@Autowired
 	private ProductRepository productRepository;
+	
+	@Autowired
+	private CategoryRepository categoryRepository;
 	
 	@Transactional(readOnly = true)
 	public Page<ProductDTO> findAll(Pageable pageable) {
@@ -37,7 +43,7 @@ public class ProductService {
 	@Transactional
 	public ProductDTO insert(ProductDTO dto) {
 		var product = new Product();
-		product.setName(dto.getName());
+		copyDTOToEntity(dto, product);
 		product = productRepository.save(product);
 		return new ProductDTO(product);
 	}
@@ -46,7 +52,7 @@ public class ProductService {
 	public ProductDTO update(Long id, ProductDTO dto) {
 		try {
 			var product = productRepository.getById(id);
-			product.setName(dto.getName());
+			copyDTOToEntity(dto, product);
 			product = productRepository.save(product);
 			return new ProductDTO(product);
 		} catch (EntityNotFoundException e) {
@@ -63,4 +69,20 @@ public class ProductService {
 			throw new DatabaseException("Integrity violation");
 		}
 	}
+	
+	private void copyDTOToEntity(ProductDTO dto, Product product) {
+		product.setName(dto.getName());
+		product.setDescription(dto.getDescription());
+		product.setPrice(dto.getPrice());
+		product.setImgUrl(dto.getImgUrl());
+		product.setDate(dto.getDate());
+		
+		product.getCategories().clear();
+		for (CategoryDTO categoryDTO : dto.getCategories()) {
+			Category category = categoryRepository.getById(categoryDTO.getId());
+			product.getCategories().add(category);
+		}
+		
+	}
+	
 }
